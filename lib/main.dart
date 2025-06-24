@@ -20,8 +20,134 @@ class MagicEatzApp extends StatelessWidget {
           foregroundColor: Color(0xFF14532D), // Green-900 equivalent
         ),
       ),
-      home: const MainScreen(),
+      home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _initializeSplash();
+  }
+
+  Future<void> _initializeSplash() async {
+    // Start the minimum 2-second timer and any initialization work
+    await Future.wait([
+      Future.delayed(const Duration(seconds: 2)), // Minimum 2 seconds
+      _performInitialization(), // Any app initialization
+    ]);
+
+    // Navigate to main screen after both complete
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const MainScreen()),
+      );
+    }
+  }
+
+  Future<void> _performInitialization() async {
+    // Add any initialization work here
+    // For now, just a small delay to simulate setup
+    await Future.delayed(const Duration(milliseconds: 500));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFE6E5DE), // MagicEatz background color
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Logo
+            Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.asset(
+                  'assets/icon.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    // Fallback if image doesn't load
+                    return Container(
+                      color: Colors.green.shade100,
+                      child: const Icon(
+                        Icons.restaurant,
+                        size: 100,
+                        color: Colors.green,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
+            
+            // App name
+            const Text(
+              'MagicEatz',
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF14532D), // Green-900
+              ),
+            ),
+            const SizedBox(height: 8),
+            
+            // Tagline
+            const Text(
+              'Your Journey to SID Recovery',
+              style: TextStyle(
+                fontSize: 16,
+                color: Color(0xFF374151), // Gray-700
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+            const SizedBox(height: 60),
+            
+            // Loading spinner
+            const SizedBox(
+              width: 40,
+              height: 40,
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF16A34A)), // Green-600
+                strokeWidth: 3,
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            // Loading text
+            const Text(
+              'Initializing your recovery protocol...',
+              style: TextStyle(
+                fontSize: 14,
+                color: Color(0xFF6B7280), // Gray-500
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -46,6 +172,7 @@ class _MainScreenState extends State<MainScreen> {
   void _initializeWebView() {
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..clearCache()
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (String url) {
@@ -57,10 +184,41 @@ class _MainScreenState extends State<MainScreen> {
             setState(() {
               _isLoading = false;
             });
+            
+            // Inject CSS and JavaScript fixes after page loads
+            _injectMobileFixes();
           },
         ),
       )
       ..loadRequest(Uri.parse('https://blue-vistas.com/magiceatz/'));
+  }
+
+  void _injectMobileFixes() {
+    // Only prevent auto-scroll to bottom on chat page - don't modify CSS
+    const script = '''
+      (function() {
+        // Only handle scroll behavior on chat page
+        if (window.location.pathname.includes('/chat')) {
+          // Prevent auto-scroll to bottom on page load
+          window.scrollTo(0, 0);
+          
+          // Override any auto-scroll behavior
+          const messagesEnd = document.querySelector('[ref="messagesEndRef"]');
+          if (messagesEnd) {
+            messagesEnd.scrollIntoView = function() { /* Disable auto-scroll */ };
+          }
+          
+          // Ensure page starts at top
+          setTimeout(() => {
+            window.scrollTo(0, 0);
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+          }, 100);
+        }
+      })();
+    ''';
+    
+    _webViewController.runJavaScript(script);
   }
 
   void _navigateToHome() {
@@ -105,11 +263,11 @@ class _MainScreenState extends State<MainScreen> {
                 ],
               ),
             ),
-            // Bottom toolbar (fixed)
+            // Bottom toolbar (fixed) - Much more compact
             Container(
-              height: 80,
+              height: 50, // Reduced from 80 to 50
               decoration: BoxDecoration(
-                color: const Color(0xFFBBF7D0), // Green-200
+                color: const Color(0xFFAEAEA6), // Darker beige as requested
                 border: Border(
                   top: BorderSide(
                     color: const Color(0xFF16A34A), // Green-600
@@ -158,20 +316,20 @@ class _MainScreenState extends State<MainScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Reduced padding
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
-              size: 28,
+              size: 20, // Reduced from 28 to 20
               color: const Color(0xFF14532D), // Green-900
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2), // Reduced from 4 to 2
             Text(
               label,
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 10, // Reduced from 12 to 10
                 color: Color(0xFF14532D), // Green-900
                 fontWeight: FontWeight.w500,
               ),
