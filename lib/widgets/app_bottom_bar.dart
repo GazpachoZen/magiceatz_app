@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../screens/qr_scanner_screen.dart';
+import '../screens/photo_type_selector.dart'; // Add this import
 
 class AppBottomBar extends StatelessWidget {
   final Function(String) onQRScan;
@@ -24,9 +25,10 @@ class AppBottomBar extends StatelessWidget {
   }
 
   void _openMenuAnalyzer(BuildContext context) {
-    // TODO: Implement menu/food label analysis
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Menu analyzer coming soon!')),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const PhotoTypeSelectorScreen(),
+      ),
     );
   }
 
