@@ -1,4 +1,4 @@
-package com.example.magiceatz
+package com.bluevista.magiceatz
 
 import io.flutter.embedding.android.FlutterActivity
 
